@@ -55,7 +55,7 @@ export default function Chat(props: { apiKeyApp: string }) {
     { color: 'gray.500' },
     { color: 'whiteAlpha.600' },
   );
- const handleTranslate = async () => {
+const handleTranslate = async () => {
   let apiKey = localStorage.getItem("apiKey");
   setInputOnSubmit(inputCode);
 
@@ -89,7 +89,6 @@ export default function Chat(props: { apiKeyApp: string }) {
     apiKey,
   };
 
-  // ============= Fetch =============
   const response = await fetch("/api/chatAPI", {
     method: "POST",
     headers: {
@@ -123,7 +122,7 @@ export default function Chat(props: { apiKeyApp: string }) {
     const { value, done: doneReading } = await reader.read();
     done = doneReading;
     const chunkValue = decoder.decode(value);
-    setOutputCode((prevCode) => prevCode + chunkValue);
+    setOutputCode((prev) => prev + chunkValue);
   }
 
   setLoading(false);

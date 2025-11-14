@@ -113,6 +113,8 @@ export default function Chat(props: { apiKeyApp: string }) {
   }
 
   const data = response.body;
+   ...
+ };
 
   if (!data) {
     setLoading(false);

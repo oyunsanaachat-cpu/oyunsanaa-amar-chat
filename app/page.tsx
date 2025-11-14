@@ -83,9 +83,9 @@ export default function Chat(props: { apiKeyApp: string }) {
   }
 
   // Хариуг цэвэрлэх, loading эхлүүлэх
-  setOutputCode("");
+   // ============= Fetch =============
+  setOutputCode('');
   setLoading(true);
-
   const controller = new AbortController();
 
   const body: ChatBody = {
@@ -94,34 +94,40 @@ export default function Chat(props: { apiKeyApp: string }) {
     apiKey,
   };
 
-  // -------------- Fetch --------------
-  const response = await fetch("./api/chatAPI", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    signal: controller.signal,
-    body: JSON.stringify(body),
-  });
+  try {
+    const response = await fetch('/api/chatAPI', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+      body: JSON.stringify(body),
+    });
 
-  if (!response.ok) {
+    if (!response.ok || !response.body) {
+      setLoading(false);
+      alert('Something went wrong when fetching from the API.');
+      return;
+    }
+
+    const data = response.body;
+    const reader = data.getReader();
+    const decoder = new TextDecoder();
+    let done = false;
+
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      const chunkValue = decoder.decode(value);
+      setOutputCode(prev => prev + chunkValue);
+    }
+
     setLoading(false);
-    alert(
-      "Something went wrong went fetching from the API. Make sure to use a valid API key."
-    );
-    return;
-  }
-
-  const data = response.body;
-...
-};
- 
-  if (!data) {
+  } catch (err) {
+    console.error(err);
     setLoading(false);
-    alert("Something went wrong");
-    return;
+    alert('Network error while calling the API.');
   }
-
   const reader = data.getReader();
   const decoder = new TextDecoder();
   let done = false;

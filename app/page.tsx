@@ -30,7 +30,7 @@ export default function Chat(props: { apiKeyApp: string }) {
   // Response message
   const [outputCode, setOutputCode] = useState<string>('');
   // ChatGPT model
-  const [model, setModel] = useState<OpenAIModel>('gpt-4o');
+  const [model, setModel] = useState<OpenAIModel>('gpt-3.5-turbo');
   // Loading state
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -55,64 +55,59 @@ export default function Chat(props: { apiKeyApp: string }) {
     { color: 'gray.500' },
     { color: 'whiteAlpha.600' },
   );
-const handleTranslate = async () => {
-  // API key-г одоо фронтоос авахгүй, сервер талд .env-ээс авна.
-  const apiKey = ''; // хоосон стринг явуулна, backend тоохгүй
+  const handleTranslate = async () => {
+    let apiKey = localStorage.getItem('apiKey');
+    setInputOnSubmit(inputCode);
 
-  setInputOnSubmit(inputCode);
+    // Chat post conditions(maximum number of characters, valid message etc.)
+    const maxCodeLength = model === 'gpt-3.5-turbo' ? 700 : 700;
 
-  // Chat post conditions (maximum number of characters, valid message etc.)
-  const maxCodeLength = model === 'gpt-4o' ? 700 : 700;
-
-  // 🔴 ЭНЭ БЛОКЫГ АВААРАЙ:
-  // if (!apiKey?.includes('sk-')) {
-  //   alert('Please enter an API key.');
-  //   return;
-  // }
-
-  if (!inputCode) {
-    alert('Please enter your message.');
-    return;
-  }
-
-  if (inputCode.length > maxCodeLength) {
-    alert(`Please enter code less than ${maxCodeLength} characters.`);
-    return;
-  }
-
-  setOutputCode('');
-  setLoading(true);
-  const controller = new AbortController();
-
-  const body: ChatBody = {
-    inputCode,
-    model,
-    apiKey, // хоосон стринг явуулж байгаа, OK
-  };
-
-  // ============== Fetch ==============
-  const response = await fetch('./api/chatAPI', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    signal: controller.signal,
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    setLoading(false);
-    if (response) {
-      alert(
-        'Something went wrong went fetching from the API. Make sure to use a valid API key.',
-      );
+    if (!apiKey?.includes('sk-')) {
+      alert('Please enter an API key.');
+      return;
     }
-    return;
-  }
 
-  const data = response.body;
-  ...
-};
+    if (!inputCode) {
+      alert('Please enter your message.');
+      return;
+    }
+
+    if (inputCode.length > maxCodeLength) {
+      alert(
+        `Please enter code less than ${maxCodeLength} characters. You are currently at ${inputCode.length} characters.`,
+      );
+      return;
+    }
+    setOutputCode(' ');
+    setLoading(true);
+    const controller = new AbortController();
+    const body: ChatBody = {
+      inputCode,
+      model,
+      apiKey,
+    };
+
+    // -------------- Fetch --------------
+    const response = await fetch('./api/chatAPI', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      setLoading(false);
+      if (response) {
+        alert(
+          'Something went wrong went fetching from the API. Make sure to use a valid API key.',
+        );
+      }
+      return;
+    }
+
+    const data = response.body;
 
     if (!data) {
       setLoading(false);
@@ -193,41 +188,8 @@ const handleTranslate = async () => {
               transition="0.3s"
               justify={'center'}
               align="center"
-              bg={model === 'gpt-4o' ? buttonBg : 'transparent'}
-              w="174px"
-              h="70px"
-              boxShadow={model === 'gpt-4o' ? buttonShadow : 'none'}
-              borderRadius="14px"
-              color={textColor}
-              fontSize="18px"
-              fontWeight={'700'}
-              onClick={() => setModel('gpt-4o')}
-            >
-              <Flex
-                borderRadius="full"
-                justify="center"
-                align="center"
-                bg={bgIcon}
-                me="10px"
-                h="39px"
-                w="39px"
-              >
-                <Icon
-                  as={MdAutoAwesome}
-                  width="20px"
-                  height="20px"
-                  color={iconColor}
-                />
-              </Flex>
-              Эрүүл мэнд
-            </Flex>
-            <Flex
-              cursor={'pointer'}
-              transition="0.3s"
-              justify={'center'}
-              align="center"
               bg={model === 'gpt-3.5-turbo' ? buttonBg : 'transparent'}
-              w="164px"
+              w="174px"
               h="70px"
               boxShadow={model === 'gpt-3.5-turbo' ? buttonShadow : 'none'}
               borderRadius="14px"
@@ -246,13 +208,46 @@ const handleTranslate = async () => {
                 w="39px"
               >
                 <Icon
+                  as={MdAutoAwesome}
+                  width="20px"
+                  height="20px"
+                  color={iconColor}
+                />
+              </Flex>
+              GPT-3.5
+            </Flex>
+            <Flex
+              cursor={'pointer'}
+              transition="0.3s"
+              justify={'center'}
+              align="center"
+              bg={model === 'gpt-4' ? buttonBg : 'transparent'}
+              w="164px"
+              h="70px"
+              boxShadow={model === 'gpt-4' ? buttonShadow : 'none'}
+              borderRadius="14px"
+              color={textColor}
+              fontSize="18px"
+              fontWeight={'700'}
+              onClick={() => setModel('gpt-4')}
+            >
+              <Flex
+                borderRadius="full"
+                justify="center"
+                align="center"
+                bg={bgIcon}
+                me="10px"
+                h="39px"
+                w="39px"
+              >
+                <Icon
                   as={MdBolt}
                   width="20px"
                   height="20px"
                   color={iconColor}
                 />
               </Flex>
-              Санхүү
+              GPT-4
             </Flex>
           </Flex>
 

@@ -214,7 +214,7 @@ export default function Chat(props: { apiKeyApp: string }) {
                   color={iconColor}
                 />
               </Flex>
-              GPT-4o
+              Эрүүл мэнд
             </Flex>
             <Flex
               cursor={'pointer'}
@@ -247,7 +247,7 @@ export default function Chat(props: { apiKeyApp: string }) {
                   color={iconColor}
                 />
               </Flex>
-              GPT-3.5
+              Санхүү
             </Flex>
           </Flex>
 

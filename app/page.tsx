@@ -55,59 +55,64 @@ export default function Chat(props: { apiKeyApp: string }) {
     { color: 'gray.500' },
     { color: 'whiteAlpha.600' },
   );
-  const handleTranslate = async () => {
-    let apiKey = localStorage.getItem('apiKey');
-    setInputOnSubmit(inputCode);
+const handleTranslate = async () => {
+  // API key-г одоо фронтоос авахгүй, сервер талд .env-ээс авна.
+  const apiKey = ''; // хоосон стринг явуулна, backend тоохгүй
 
-    // Chat post conditions(maximum number of characters, valid message etc.)
-    const maxCodeLength = model === 'gpt-4o' ? 700 : 700;
+  setInputOnSubmit(inputCode);
 
-    if (!apiKey?.includes('sk-')) {
-      alert('Please enter an API key.');
-      return;
-    }
+  // Chat post conditions (maximum number of characters, valid message etc.)
+  const maxCodeLength = model === 'gpt-4o' ? 700 : 700;
 
-    if (!inputCode) {
-      alert('Please enter your message.');
-      return;
-    }
+  // 🔴 ЭНЭ БЛОКЫГ АВААРАЙ:
+  // if (!apiKey?.includes('sk-')) {
+  //   alert('Please enter an API key.');
+  //   return;
+  // }
 
-    if (inputCode.length > maxCodeLength) {
+  if (!inputCode) {
+    alert('Please enter your message.');
+    return;
+  }
+
+  if (inputCode.length > maxCodeLength) {
+    alert(`Please enter code less than ${maxCodeLength} characters.`);
+    return;
+  }
+
+  setOutputCode('');
+  setLoading(true);
+  const controller = new AbortController();
+
+  const body: ChatBody = {
+    inputCode,
+    model,
+    apiKey, // хоосон стринг явуулж байгаа, OK
+  };
+
+  // ============== Fetch ==============
+  const response = await fetch('./api/chatAPI', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    signal: controller.signal,
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    setLoading(false);
+    if (response) {
       alert(
-        `Please enter code less than ${maxCodeLength} characters. You are currently at ${inputCode.length} characters.`,
+        'Something went wrong went fetching from the API. Make sure to use a valid API key.',
       );
-      return;
     }
-    setOutputCode(' ');
-    setLoading(true);
-    const controller = new AbortController();
-    const body: ChatBody = {
-      inputCode,
-      model,
-      apiKey,
-    };
+    return;
+  }
 
-    // -------------- Fetch --------------
-    const response = await fetch('./api/chatAPI', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal,
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      setLoading(false);
-      if (response) {
-        alert(
-          'Something went wrong went fetching from the API. Make sure to use a valid API key.',
-        );
-      }
-      return;
-    }
-
-    const data = response.body;
+  const data = response.body;
+  ...
+};
 
     if (!data) {
       setLoading(false);

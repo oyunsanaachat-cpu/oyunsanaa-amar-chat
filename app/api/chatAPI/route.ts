@@ -1,44 +1,41 @@
-import { ChatBody } from '@/types/types';
-import { OpenAIStream } from '@/utils/chatStream';
+import OpenAI from "openai";
+import { NextRequest } from "next/server";
 
-export const runtime = 'edge';
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+});
 
-export async function GET(req: Request): Promise<Response> {
+export async function POST(req: NextRequest) {
   try {
-    const { inputCode, model, apiKey } = (await req.json()) as ChatBody;
+    const { messages } = await req.json();
 
-    let apiKeyFinal;
-    if (apiKey) {
-      apiKeyFinal = apiKey;
-    } else {
-      apiKeyFinal = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
-    }
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "Чи 'Оюунсанаа' нэртэй, зөөлөн, дэмжлэгтэй зөвлөх. " +
+            "Хэрэглэгчийн сэтгэл хөдлөлийг шүүмжлэлгүй сонсож, " +
+            "аюулгүй орчин бүрдүүл. Оношийг мэргэжлийн эмч тавина, " +
+            "чи бол зөвхөн тайвшруулах, ойлгох, өдөр тутмын зөвлөгөө өгөхөд тусална. " +
+            "Хариултаа монголоор, товч, ойлгомжтой бич.",
+        },
+        ...messages,
+      ],
+    });
 
-    const stream = await OpenAIStream(inputCode, model, apiKeyFinal);
+    const reply = completion.choices[0]?.message;
 
-    return new Response(stream);
-  } catch (error) {
-    console.error(error);
-    return new Response('Error', { status: 500 });
-  }
-}
-
-export async function POST(req: Request): Promise<Response> {
-  try {
-    const { inputCode, model, apiKey } = (await req.json()) as ChatBody;
-
-    let apiKeyFinal;
-    if (apiKey) {
-      apiKeyFinal = apiKey;
-    } else {
-      apiKeyFinal = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
-    }
-
-    const stream = await OpenAIStream(inputCode, model, apiKeyFinal);
-
-    return new Response(stream);
-  } catch (error) {
-    console.error(error);
-    return new Response('Error', { status: 500 });
+    return new Response(JSON.stringify(reply), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response(JSON.stringify({ error: "Server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }

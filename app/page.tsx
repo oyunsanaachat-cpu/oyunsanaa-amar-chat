@@ -56,15 +56,11 @@ export default function Chat(props: { apiKeyApp: string }) {
     { color: 'whiteAlpha.600' },
   );
  const handleTranslate = async () => {
-  // 🔑 API key-ийг localStorage-оос уншиж байна (анхны template-ийн логик)
   let apiKey = localStorage.getItem("apiKey");
-
   setInputOnSubmit(inputCode);
 
-  // Chat post conditions (maximum number of characters, valid message etc.)
   const maxCodeLength = model === "gpt-3.5-turbo" ? 700 : 700;
 
-  // Хэрвээ API key ороогүй бол popup харуулна
   if (!apiKey?.includes("sk-")) {
     alert("Please enter an API key.");
     return;
@@ -82,10 +78,9 @@ export default function Chat(props: { apiKeyApp: string }) {
     return;
   }
 
-  // Хариуг цэвэрлэх, loading эхлүүлэх
-   // ============= Fetch =============
-  setOutputCode('');
+  setOutputCode("");
   setLoading(true);
+
   const controller = new AbortController();
 
   const body: ChatBody = {
@@ -94,40 +89,32 @@ export default function Chat(props: { apiKeyApp: string }) {
     apiKey,
   };
 
-  try {
-    const response = await fetch('/api/chatAPI', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal,
-      body: JSON.stringify(body),
-    });
+  // ============= Fetch =============
+  const response = await fetch("/api/chatAPI", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    signal: controller.signal,
+    body: JSON.stringify(body),
+  });
 
-    if (!response.ok || !response.body) {
-      setLoading(false);
-      alert('Something went wrong when fetching from the API.');
-      return;
-    }
-
-    const data = response.body;
-    const reader = data.getReader();
-    const decoder = new TextDecoder();
-    let done = false;
-
-    while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-      const chunkValue = decoder.decode(value);
-      setOutputCode(prev => prev + chunkValue);
-    }
-
+  if (!response.ok) {
     setLoading(false);
-  } catch (err) {
-    console.error(err);
-    setLoading(false);
-    alert('Network error while calling the API.');
+    alert(
+      "Something went wrong went fetching from the API. Make sure to use a valid API key."
+    );
+    return;
   }
+
+  const data = response.body;
+
+  if (!data) {
+    setLoading(false);
+    alert("Something went wrong");
+    return;
+  }
+
   const reader = data.getReader();
   const decoder = new TextDecoder();
   let done = false;

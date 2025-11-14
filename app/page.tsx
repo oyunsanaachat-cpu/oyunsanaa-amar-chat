@@ -55,80 +55,84 @@ export default function Chat(props: { apiKeyApp: string }) {
     { color: 'gray.500' },
     { color: 'whiteAlpha.600' },
   );
-  const handleTranslate = async () => {
-    let apiKey = localStorage.getItem('apiKey');
-    setInputOnSubmit(inputCode);
+ const handleTranslate = async () => {
+  // 🔑 API key-ийг localStorage-оос уншиж байна (анхны template-ийн логик)
+  let apiKey = localStorage.getItem("apiKey");
 
-    // Chat post conditions(maximum number of characters, valid message etc.)
-    const maxCodeLength = model === 'gpt-3.5-turbo' ? 700 : 700;
+  setInputOnSubmit(inputCode);
 
-    if (!apiKey?.includes('sk-')) {
-      alert('Please enter an API key.');
-      return;
-    }
+  // Chat post conditions (maximum number of characters, valid message etc.)
+  const maxCodeLength = model === "gpt-3.5-turbo" ? 700 : 700;
 
-    if (!inputCode) {
-      alert('Please enter your message.');
-      return;
-    }
+  // Хэрвээ API key ороогүй бол popup харуулна
+  if (!apiKey?.includes("sk-")) {
+    alert("Please enter an API key.");
+    return;
+  }
 
-    if (inputCode.length > maxCodeLength) {
-      alert(
-        `Please enter code less than ${maxCodeLength} characters. You are currently at ${inputCode.length} characters.`,
-      );
-      return;
-    }
-    setOutputCode(' ');
-    setLoading(true);
-    const controller = new AbortController();
-    const body: ChatBody = {
-      inputCode,
-      model,
-      apiKey,
-    };
+  if (!inputCode) {
+    alert("Please enter your message.");
+    return;
+  }
 
-    // -------------- Fetch --------------
-    const response = await fetch('./api/chatAPI', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal,
-      body: JSON.stringify(body),
-    });
+  if (inputCode.length > maxCodeLength) {
+    alert(
+      `Please enter code less than ${maxCodeLength} characters. You are currently at ${inputCode.length} characters.`
+    );
+    return;
+  }
 
-    if (!response.ok) {
-      setLoading(false);
-      if (response) {
-        alert(
-          'Something went wrong went fetching from the API. Make sure to use a valid API key.',
-        );
-      }
-      return;
-    }
+  // Хариуг цэвэрлэх, loading эхлүүлэх
+  setOutputCode("");
+  setLoading(true);
 
-    const data = response.body;
+  const controller = new AbortController();
 
-    if (!data) {
-      setLoading(false);
-      alert('Something went wrong');
-      return;
-    }
-
-    const reader = data.getReader();
-    const decoder = new TextDecoder();
-    let done = false;
-
-    while (!done) {
-      setLoading(true);
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-      const chunkValue = decoder.decode(value);
-      setOutputCode((prevCode) => prevCode + chunkValue);
-    }
-
-    setLoading(false);
+  const body: ChatBody = {
+    inputCode,
+    model,
+    apiKey,
   };
+
+  // -------------- Fetch --------------
+  const response = await fetch("./api/chatAPI", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    signal: controller.signal,
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    setLoading(false);
+    alert(
+      "Something went wrong went fetching from the API. Make sure to use a valid API key."
+    );
+    return;
+  }
+
+  const data = response.body;
+
+  if (!data) {
+    setLoading(false);
+    alert("Something went wrong");
+    return;
+  }
+
+  const reader = data.getReader();
+  const decoder = new TextDecoder();
+  let done = false;
+
+  while (!done) {
+    const { value, done: doneReading } = await reader.read();
+    done = doneReading;
+    const chunkValue = decoder.decode(value);
+    setOutputCode((prevCode) => prevCode + chunkValue);
+  }
+
+  setLoading(false);
+};
   // -------------- Copy Response --------------
   // const copyToClipboard = (text: string) => {
   //   const el = document.createElement('textarea');
